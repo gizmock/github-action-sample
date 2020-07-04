@@ -17,8 +17,7 @@ jobs:
       - name: test
         run: go test ./...
       - name: build
-        run: |
-          CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o bin/main main.go
+        run: CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o bin/main main.go
       - uses: actions/upload-artifact@v2
         name: save artifact
         with:
