@@ -1,0 +1,49 @@
+name: Push And Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  push:
+    name: push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: set AWS credential
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.YOUR_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.YOUR_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+      - name: AWS ECR login
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: push
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker build -t $ECR_REGISTRY/your_repository_name:latest .
+          docker push $ECR_REGISTRY/your_repository_name:latest
+
+  deploy:
+    name: deploy
+    needs: push
+    runs-on: ubuntu-latest
+    steps:
+      - name: set AWS credential
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.YOUR_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.YOUR_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+      - name: get task definition
+        run: aws ecs describe-task-definition --task-definition your_task_definition_name --query taskDefinition > task-definition.json
+      - name: deploy
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          cluster: your_cluster_name
+          service: your_service_name
+          wait-for-service-stability: true
