@@ -1,2 +1,2 @@
-# github-action-sample
+# github-actions-sample
 GitHub Actions workflow sample files
